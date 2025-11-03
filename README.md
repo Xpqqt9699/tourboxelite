@@ -108,7 +108,7 @@ kdotool --version
 If you're using GNOME on Wayland and want profile mode (app-specific mappings), you need to install the "Focused Window D-Bus" extension:
 
 1. Visit [Focused Window D-Bus extension page](https://extensions.gnome.org/extension/5592/focused-window-d-bus/)
-2. Click the toggle switch to install
+2. Click the Install button
 3. Verify installation:
    ```bash
    gnome-extensions list | grep focused-window-dbus
