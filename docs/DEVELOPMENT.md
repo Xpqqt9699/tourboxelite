@@ -6,9 +6,11 @@ This guide is for developers who want to work on, debug, or contribute to the To
 
 - [Development Setup](#development-setup)
 - [Running the Driver](#running-the-driver)
+- [Running the GUI](#running-the-gui)
 - [Debugging](#debugging)
 - [Project Structure](#project-structure)
 - [Development Workflow](#development-workflow)
+- [GUI Development](#gui-development)
 - [Testing](#testing)
 - [Contributing](#contributing)
 
@@ -38,6 +40,19 @@ cd /path/to/tourboxelite
 ```
 
 This allows you to modify the code and test changes without reinstalling the package.
+
+### GUI Dependencies
+
+The GUI requires additional PySide6 (Qt 6) dependencies:
+
+```bash
+# Install GUI dependencies
+./venv/bin/pip install -r tourboxelite/gui/requirements.txt
+```
+
+GUI dependencies include:
+- `PySide6` - Qt 6 Python bindings
+- `qasync` - Asyncio integration for Qt event loop
 
 ## 🚀 Running the Driver
 
@@ -97,6 +112,39 @@ Available options:
 - `mac_address` - Bluetooth MAC address (optional, overrides config file)
 - `-c, --config` - Path to custom config file
 - `-v, --verbose` - Enable verbose/debug logging
+
+## 🖥️ Running the GUI
+
+### Running the GUI for Development
+
+The GUI can be run directly from your development directory:
+
+```bash
+# Run GUI using development virtual environment
+./venv/bin/python -m tourboxelite.gui
+
+# Or if you have a development launcher script
+tourbox-gui
+```
+
+The GUI provides:
+- Visual profile management (create, edit, delete profiles)
+- Button mapping configuration with visual TourBox controller view
+- Live testing of button mappings
+- Profile settings (window matching rules)
+- Driver management (start/stop/restart systemd service)
+
+### GUI for End Users
+
+After installation via `install.sh`, users can launch the GUI with:
+
+```bash
+tourbox-gui
+```
+
+The installation script creates a launcher at `/usr/local/bin/tourbox-gui`.
+
+For complete GUI usage instructions, see [GUI_USER_GUIDE.md](GUI_USER_GUIDE.md).
 
 ## 🐛 Debugging
 
@@ -187,35 +235,54 @@ sudo evtest
 
 ```
 tourboxelite/
-├── tourboxelite/              # Main package
-│   ├── __init__.py           # Version info
-│   ├── device_ble.py         # Main BLE driver (TourBoxBLE class)
-│   ├── config_loader.py      # Config file parsing and profile management
-│   ├── window_monitor.py     # Wayland window detection
-│   └── default_mappings.conf # Default configuration template
-├── docs/                     # Documentation
-│   ├── CONFIG_GUIDE.md       # Configuration documentation
-│   ├── DEVELOPMENT.md        # This file
-│   ├── BUTTON_MAPPING_GUIDE.md  # Button reference for protocol work
-│   └── technical/            # Technical documentation
-│       ├── TOURBOX_ELITE_PROTOCOL_SOLVED.md  # BLE protocol docs
-│       ├── KDOTOOL_INFO.md   # KDE window detection info
-│       ├── LOG_MANAGEMENT.md # Logging documentation
-│       └── WINDOWS_BLE_CAPTURE_GUIDE.md  # Windows BLE capture guide
-├── ble_test_tourbox.py       # BLE test script for capturing button codes
-├── ble_test_events.py        # Test script for BLE events
-├── monitor_keys.py           # Utility to monitor key events
-├── install.sh                # Installation script
-├── uninstall.sh             # Uninstallation script
-├── install_config.sh        # Config installer (for manual setup)
-├── setup.py                  # Python package setup
-├── setup.cfg                 # Python package metadata
-├── requirements.txt          # Python dependencies
-├── LICENSE.txt               # License file
-└── README.md                 # User documentation
+├── tourboxelite/                                   # Main package
+│   ├── __init__.py                                 # Version info
+│   ├── device_ble.py                               # Main BLE driver (TourBoxBLE class)
+│   ├── config_loader.py                            # Config file parsing and profile management
+│   ├── window_monitor.py                           # Wayland window detection
+│   ├── default_mappings.conf                       # Default configuration template
+│   └── gui/                                        # GUI package
+│       ├── __init__.py                             # GUI package init
+│       ├── __main__.py                             # GUI entry point
+│       ├── main_window.py                          # Main window (orchestrates all components)
+│       ├── profile_manager.py                      # Profile list widget (CRUD operations)
+│       ├── controls_list.py                        # Controls table widget (displays mappings)
+│       ├── control_editor.py                       # Control mapping editor widget
+│       ├── controller_view.py                      # Visual TourBox controller view (SVG-based)
+│       ├── profile_settings_dialog.py              # Profile settings dialog (window matching)
+│       ├── driver_manager.py                       # Driver service management widget
+│       ├── config_writer.py                        # Config file write operations (atomic saves)
+│       ├── requirements.txt                        # GUI-specific dependencies (PySide6, qasync)
+│       └── assets/                                 # GUI assets
+│           └── *.svg                               # SVG images for controller view
+├── docs/                                           # Documentation
+│   ├── CONFIG_GUIDE.md                             # Configuration documentation
+│   ├── DEVELOPMENT.md                              # This file
+│   ├── GUI_USER_GUIDE.md                           # GUI user documentation
+│   ├── BUTTON_MAPPING_GUIDE.md                     # Button reference for protocol work
+│   ├── images/                                     # Documentation images
+│   │   └── gui-screenshot.png                      # GUI screenshot
+│   └── technical/                                  # Technical documentation
+│       ├── TOURBOX_ELITE_PROTOCOL_SOLVED.md        # BLE protocol docs
+│       ├── KDOTOOL_INFO.md                         # KDE window detection info
+│       ├── LOG_MANAGEMENT.md                       # Logging documentation
+│       └── WINDOWS_BLE_CAPTURE_GUIDE.md            # Windows BLE capture guide
+├── ble_test_tourbox.py                             # BLE test script for capturing button codes
+├── ble_test_events.py                              # Test script for BLE events
+├── monitor_keys.py                                 # Utility to monitor key events
+├── install.sh                                      # Installation script (includes GUI deps & launcher)
+├── uninstall.sh                                    # Uninstallation script (removes GUI launcher)
+├── install_config.sh                               # Config installer (for manual setup)
+├── setup.py                                        # Python package setup
+├── setup.cfg                                       # Python package metadata (includes GUI entry point)
+├── requirements.txt                                # Python dependencies
+├── LICENSE.txt                                     # License file
+└── README.md                                       # User documentation
 ```
 
 ### Key Files
+
+#### Core Driver Files
 
 **`device_ble.py`** - Main driver logic
 - `TourBoxBLE` class - Main driver
@@ -241,6 +308,61 @@ tourboxelite/
 - Captures raw button codes
 - Used for reverse engineering protocol
 - See BUTTON_MAPPING_GUIDE.md
+
+#### GUI Files
+
+**`gui/main_window.py`** - Main GUI window (~900 LOC)
+- Central coordinator for all GUI components
+- Orchestrates profile management, control editing, testing
+- Handles unsaved changes detection and prompts
+- Manages signal flow between components
+- Implements save/test/close workflows
+
+**`gui/profile_manager.py`** - Profile management widget (~455 LOC)
+- Profile list display (name, window matching rules)
+- Profile CRUD operations (create, edit, delete)
+- Emits signals: `profile_selected`, `profiles_changed`, `profiles_reset`
+- Prevents deletion of default profile
+- Handles both saved and unsaved profile states
+
+**`gui/controls_list.py`** - Controls table widget (~303 LOC)
+- Displays all 20 TourBox controls and their mappings
+- Shows human-readable action names (e.g., "Ctrl+Z", "Wheel Up")
+- Converts evdev key codes to friendly names
+- Emits `control_selected` signal when user clicks a control
+
+**`gui/control_editor.py`** - Control mapping editor widget (~350 LOC)
+- Edit button/rotary mappings with key capture
+- Dropdown for common actions (copy, paste, undo, etc.)
+- Multi-key capture for combinations (Ctrl+Alt+X)
+- Wheel direction selection for rotary controls
+- Clear/reset functionality
+
+**`gui/controller_view.py`** - Visual controller view (~200 LOC)
+- SVG-based visual representation of TourBox Elite
+- Shows which control is currently selected
+- Highlights controls with colored overlays
+- Click-to-select functionality
+
+**`gui/profile_settings_dialog.py`** - Profile settings dialog (~120 LOC)
+- Edit profile name and window matching rules
+- Window class and app_id configuration
+- Used when creating/editing profiles
+- Input validation for profile names
+
+**`gui/driver_manager.py`** - Driver service management (~150 LOC)
+- Start/stop/restart systemd service
+- Display service status (running/stopped/not installed)
+- Real-time status updates
+- Service log viewing
+
+**`gui/config_writer.py`** - Config file operations (~250 LOC)
+- Atomic config file saves with backup rotation
+- Create new profiles
+- Save profile metadata (name, window matching)
+- Save button mappings
+- Delete profiles
+- Keeps 5 backup files (.bak.1 through .bak.5)
 
 ## 🔄 Development Workflow
 
@@ -356,10 +478,182 @@ Edit `window_monitor.py`:
        await self.monitor_your_compositor()
    ```
 
+## 🎨 GUI Development
+
+### GUI Architecture
+
+The GUI uses a signal-based architecture built with PySide6 (Qt 6):
+
+- **Signal Flow**: Components communicate via Qt signals
+  - `profile_selected` - User selects a different profile (triggers unsaved changes check)
+  - `profiles_changed` - Profile metadata changed (marks as modified)
+  - `profiles_reset` - Profiles reloaded from config (clears modified state)
+  - `control_selected` - User clicks a control in the table
+  - `mapping_changed` - User changes a control mapping
+
+- **State Management**: Main window tracks:
+  - `current_profile` - Currently selected profile
+  - `is_modified` - Has profile metadata changed?
+  - `modified_mappings` - Dict of changed button mappings
+  - `profile_original_names` - Tracks profile renames using `id(profile)` as key
+
+- **Atomic Saves**: Config writer implements atomic writes with backup rotation
+  - Writes to temporary file first
+  - Rotates existing backups (.bak.1 → .bak.2, etc.)
+  - Moves temp file to final location
+  - Keeps 5 backup files
+
+### Making GUI Changes
+
+1. **Stop the GUI** if running
+
+2. **Make your changes** to GUI code
+
+3. **Test directly**:
+   ```bash
+   ./venv/bin/python -m tourboxelite.gui
+   ```
+
+4. **Check for errors** in terminal output (Qt errors, Python exceptions)
+
+5. **Test all workflows**:
+   - Create/edit/delete profiles
+   - Edit button mappings
+   - Save changes
+   - Test button mappings
+   - Handle unsaved changes prompts
+
+### Adding a New Control Type
+
+If adding support for a new TourBox model with different controls:
+
+1. **Update `BUTTON_CODES`** in `config_loader.py`:
+   ```python
+   BUTTON_CODES = {
+       'new_control': (0xXX, 0xYY),  # press/release codes
+   }
+   ```
+
+2. **Add to `CONTROL_NAMES`** in `controls_list.py`:
+   ```python
+   CONTROL_NAMES = [
+       'side', 'top', 'tall', 'short',
+       'new_control',  # Add here
+   ]
+   ```
+
+3. **Add display name** to `CONTROL_DISPLAY_NAMES`:
+   ```python
+   CONTROL_DISPLAY_NAMES = {
+       'new_control': 'New Control Button',
+   }
+   ```
+
+4. **Update SVG assets** in `gui/assets/` if adding visual elements
+
+5. **Test** with the GUI
+
+### GUI Development Tips
+
+- **Use Qt Designer?** No - all layouts are built programmatically for easier version control
+- **Debugging signals**: Add logging to signal handlers to trace signal flow
+- **Testing dialogs**: Use `dialog.exec()` to test modal dialogs interactively
+- **PySide6 docs**: https://doc.qt.io/qtforpython-6/
+- **Qt signals/slots**: Signals connect components without tight coupling
+
+### Common GUI Tasks
+
+**Add a new signal to a widget:**
+```python
+from PySide6.QtCore import Signal
+
+class MyWidget(QWidget):
+    # Define signal
+    something_changed = Signal(str)  # str argument
+
+    def some_method(self):
+        # Emit signal
+        self.something_changed.emit("value")
+```
+
+**Connect a signal in main window:**
+```python
+self.my_widget.something_changed.connect(self._on_something_changed)
+
+def _on_something_changed(self, value: str):
+    logger.info(f"Something changed: {value}")
+```
+
+**Show a message box:**
+```python
+from PySide6.QtWidgets import QMessageBox
+
+QMessageBox.information(self, "Title", "Message text")
+QMessageBox.warning(self, "Title", "Warning text")
+QMessageBox.critical(self, "Title", "Error text")
+
+# Ask a question
+reply = QMessageBox.question(
+    self, "Title", "Question?",
+    QMessageBox.Yes | QMessageBox.No,
+    QMessageBox.No  # Default button
+)
+if reply == QMessageBox.Yes:
+    # User clicked Yes
+```
+
+**Update table contents:**
+```python
+# Clear table
+self.table.setRowCount(0)
+
+# Add rows
+for row, item in enumerate(items):
+    self.table.insertRow(row)
+    self.table.setItem(row, 0, QTableWidgetItem(str(item)))
+
+# Force update
+self.table.viewport().update()
+```
+
+**Block signals temporarily:**
+```python
+# Prevent triggering signals during updates
+self.widget.blockSignals(True)
+# Make changes...
+self.widget.blockSignals(False)
+```
+
+### GUI Testing Workflows
+
+**Test unsaved changes handling:**
+1. Create new profile
+2. Edit a button mapping
+3. Click another profile → should prompt to save
+4. Test all three options: Save, Discard, Cancel
+
+**Test profile operations:**
+1. Create profile (copy vs. empty)
+2. Edit profile settings (name, window matching)
+3. Delete profile (saved vs. unsaved)
+4. Verify default profile cannot be deleted/edited
+
+**Test button mapping:**
+1. Select control in table
+2. Change mapping in editor
+3. Test mapping (should auto-save)
+4. Verify mapping persists after app restart
+
+**Test driver integration:**
+1. Start/stop/restart driver
+2. Check status updates
+3. Verify driver uses saved config
+
 ## 🧪 Testing
 
 ### Manual Testing Checklist
 
+#### Core Driver Testing
 - [ ] All buttons respond correctly
 - [ ] Rotary controls (knob, scroll, dial) work smoothly
 - [ ] Keys don't get stuck when rotating knobs
@@ -368,6 +662,27 @@ Edit `window_monitor.py`:
 - [ ] Service starts on login
 - [ ] Config changes apply after restart
 - [ ] Driver reconnects after TourBox power cycle
+
+#### GUI Testing
+- [ ] GUI launches successfully (`tourbox-gui`)
+- [ ] All profiles load and display correctly
+- [ ] Profile creation works (both copy and empty)
+- [ ] Profile editing (name, window matching) works
+- [ ] Profile deletion works (with confirmation)
+- [ ] Cannot delete or edit default profile
+- [ ] Controls list displays all 20 controls
+- [ ] Control mappings display correctly (readable names)
+- [ ] Control editor captures key presses
+- [ ] Multi-key combinations work (Ctrl+Alt+X)
+- [ ] Wheel direction selection works for rotary controls
+- [ ] Unsaved changes prompt appears when switching profiles
+- [ ] Save button saves all changes to config file
+- [ ] Test button saves and tests mappings
+- [ ] Close without saving prompts correctly
+- [ ] Controller view highlights selected control
+- [ ] Driver status shows correct state
+- [ ] Start/stop/restart driver buttons work
+- [ ] Config backups are created (.bak.1 through .bak.5)
 
 ### Test Profile Switching
 
@@ -403,6 +718,33 @@ for p in profiles:
     print(f"Profile: {p.name}")
     print(f"  Mapping: {p.mapping}")
 ```
+
+### Test GUI
+
+```bash
+# Launch GUI
+./venv/bin/python -m tourboxelite.gui
+
+# Check terminal for any errors or warnings
+```
+
+**Test workflow:**
+1. Create a new profile (test both copy and empty options)
+2. Edit the new profile's name and window matching
+3. Select a control and change its mapping
+4. Click another profile → should prompt about unsaved changes
+5. Test "Save", "Discard", and "Cancel" options
+6. Use Test button to test mappings live
+7. Verify changes persist after closing and reopening GUI
+8. Delete the test profile
+9. Check that config backups were created in `~/.config/tourbox/`
+
+**Test edge cases:**
+- Try to delete default profile (should be prevented)
+- Try to edit default profile settings (button should be disabled)
+- Create profile without saving, then close GUI (should prompt)
+- Create profile, change mappings, test (should auto-save)
+- Rapidly switch between profiles (check for race conditions)
 
 ## 🔬 Reverse Engineering & Protocol Work
 
@@ -503,19 +845,30 @@ async def handle_button_event(self, sender: int, data: bytearray):
 ### Before Submitting
 
 1. Test your changes thoroughly
+   - Core driver: Test all buttons, rotary controls, profile switching
+   - GUI: Test all workflows (create/edit/delete profiles, button mapping, save/test)
 2. Update documentation if needed
+   - README.md for user-facing changes
+   - CONFIG_GUIDE.md or GUI_USER_GUIDE.md for configuration changes
+   - DEVELOPMENT.md for developer-facing changes
 3. Follow existing code style
 4. Add comments for non-obvious code
-5. Test with both simple mode and profile mode
+5. Test with both simple mode and profile mode (if driver changes)
+6. If GUI changes: Test on different Qt themes/desktop environments if possible
 
 ### Commit Messages
 
 Use clear, descriptive commit messages:
 ```
-Good:
+Good (Driver):
 - "Fix rotary control key release for knob zoom"
 - "Add support for Hyprland window detection"
 - "Update config parser to handle inline comments"
+
+Good (GUI):
+- "Fix infinite discard dialog loop when canceling profile switch"
+- "Add visual controller view with SVG highlighting"
+- "Implement atomic config saves with backup rotation"
 
 Bad:
 - "fix bug"
@@ -560,12 +913,55 @@ pidfile=/tmp/tourbox.pid ./venv/bin/python -m tourboxelite.device_ble
 - This was fixed - make sure you have latest `config_loader.py`
 - Rotary controls should have stop events: `(0x44, 0xc4)`
 
+**GUI won't launch / "No module named 'PySide6'"**
+```bash
+# Install GUI dependencies
+./venv/bin/pip install -r tourboxelite/gui/requirements.txt
+```
+
+**GUI crashes on startup**
+- Check terminal output for Qt errors
+- Verify PySide6 is compatible with your Python version
+- Try: `./venv/bin/python -m PySide6.QtCore` to test Qt installation
+
+**"tourbox-gui: command not found"**
+```bash
+# Check if launcher exists
+ls -la /usr/local/bin/tourbox-gui
+
+# If not, reinstall or create manually:
+# See install.sh for launcher script creation
+```
+
+**GUI shows empty profile list**
+- Check config file exists: `ls ~/.config/tourbox/mappings.conf`
+- Check config file permissions: `ls -la ~/.config/tourbox/`
+- Try loading profiles manually:
+  ```python
+  from tourboxelite.config_loader import load_profiles
+  profiles = load_profiles()
+  print(profiles)
+  ```
+
+**Changes not saving in GUI**
+- Check terminal output for save errors
+- Verify config directory is writable: `ls -la ~/.config/tourbox/`
+- Check config backups exist: `ls ~/.config/tourbox/*.bak.*`
+- Look for errors in `~/.config/tourbox/mappings.conf`
+
 ## 📚 Additional Resources
 
+### Core Driver Resources
 - [Bleak Documentation](https://bleak.readthedocs.io/) - Python BLE library
 - [evdev Documentation](https://python-evdev.readthedocs.io/) - Linux input events
 - [D-Bus Tutorial](https://dbus.freedesktop.org/doc/dbus-tutorial.html) - For window detection
 - [systemd Service Guide](https://www.freedesktop.org/software/systemd/man/systemd.service.html)
+
+### GUI Development Resources
+- [PySide6 Documentation](https://doc.qt.io/qtforpython-6/) - Qt 6 Python bindings
+- [Qt Documentation](https://doc.qt.io/qt-6/) - Qt framework reference
+- [qasync Documentation](https://github.com/CabbageDevelopment/qasync) - Asyncio integration for Qt
+- [Qt Signals & Slots](https://doc.qt.io/qt-6/signalsandslots.html) - Signal/slot mechanism
 
 ## 📄 License
 
