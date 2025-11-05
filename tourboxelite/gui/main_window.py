@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
     QLabel, QSplitter, QMessageBox, QDialog, QProgressDialog, QToolBar
 )
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QAction, QKeySequence
+from PySide6.QtGui import QAction, QKeySequence, QIcon
 
 # Import from GUI modules
 from .profile_manager import ProfileManager
@@ -34,6 +34,9 @@ class TourBoxConfigWindow(QMainWindow):
         self.setMinimumSize(1000, 700)
         self.resize(1280, 1024)
         self.driver_was_running = False
+
+        # Set window icon
+        self._set_window_icon()
 
         # Track current profile and modifications
         self.current_profile = None
@@ -145,6 +148,23 @@ class TourBoxConfigWindow(QMainWindow):
 
         # Add test button
         toolbar.addAction(self.test_action)
+
+    def _set_window_icon(self):
+        """Set the window icon from assets"""
+        import os
+        from pathlib import Path
+
+        # Get the path to the icon file
+        # __file__ is the path to this module (main_window.py)
+        assets_dir = Path(__file__).parent / "assets"
+        icon_path = assets_dir / "tourbox-icon.png"
+
+        if icon_path.exists():
+            icon = QIcon(str(icon_path))
+            self.setWindowIcon(icon)
+            logger.debug(f"Window icon set from {icon_path}")
+        else:
+            logger.warning(f"Icon file not found: {icon_path}")
 
     def showEvent(self, event):
         """Called when window is shown - perform initialization"""
@@ -1002,6 +1022,7 @@ def main():
     # Create Qt application
     app = QApplication(sys.argv)
     app.setApplicationName("TourBox Elite Configuration")
+    app.setDesktopFileName("tourbox-gui.desktop")
 
     # Create and show main window
     window = TourBoxConfigWindow()

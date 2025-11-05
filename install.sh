@@ -178,6 +178,42 @@ else
     exit 1
 fi
 
+# Install application icon
+echo ""
+echo "Installing application icon..."
+ICON_SOURCE="$SCRIPT_DIR/tourboxelite/gui/assets/tourbox-icon.png"
+ICON_DEST="/usr/share/pixmaps/tourbox-icon.png"
+
+if [ -f "$ICON_SOURCE" ]; then
+    sudo cp "$ICON_SOURCE" "$ICON_DEST"
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓${NC} Installed icon: $ICON_DEST"
+    else
+        echo -e "${YELLOW}!${NC} Warning: Failed to install icon"
+    fi
+else
+    echo -e "${YELLOW}!${NC} Warning: Icon file not found: $ICON_SOURCE"
+fi
+
+# Install desktop entry
+echo "Installing desktop entry..."
+DESKTOP_SOURCE="$SCRIPT_DIR/tourbox-gui.desktop"
+DESKTOP_DEST="/usr/share/applications/tourbox-gui.desktop"
+
+if [ -f "$DESKTOP_SOURCE" ]; then
+    sudo cp "$DESKTOP_SOURCE" "$DESKTOP_DEST"
+    if [ $? -eq 0 ]; then
+        # Update desktop database (makes it appear immediately)
+        sudo update-desktop-database /usr/share/applications/ 2>/dev/null || true
+        echo -e "${GREEN}✓${NC} Installed desktop entry: $DESKTOP_DEST"
+        echo -e "${GREEN}✓${NC} Application added to system menu"
+    else
+        echo -e "${YELLOW}!${NC} Warning: Failed to install desktop entry"
+    fi
+else
+    echo -e "${YELLOW}!${NC} Warning: Desktop file not found: $DESKTOP_SOURCE"
+fi
+
 # Install config file
 echo ""
 echo "=========================================="
@@ -324,7 +360,8 @@ echo "  Restart: systemctl --user restart tourbox"
 echo ""
 echo "To customize button mappings:"
 echo "  Option 1 - Use the GUI (recommended):"
-echo "    tourbox-gui"
+echo "    - Run from terminal: tourbox-gui"
+echo "    - Or find 'TourBox Elite Configuration' in your app menu"
 echo ""
 echo "  Option 2 - Edit config file manually:"
 echo "    nano $CONFIG_FILE"

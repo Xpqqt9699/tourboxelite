@@ -79,6 +79,23 @@ if [ -f "$LAUNCHER_FILE" ]; then
     echo -e "${GREEN}✓${NC} Launcher script removed"
 fi
 
+# Remove desktop entry
+DESKTOP_FILE="/usr/share/applications/tourbox-gui.desktop"
+if [ -f "$DESKTOP_FILE" ]; then
+    echo "Removing desktop entry..."
+    sudo rm "$DESKTOP_FILE"
+    sudo update-desktop-database /usr/share/applications/ 2>/dev/null || true
+    echo -e "${GREEN}✓${NC} Desktop entry removed"
+fi
+
+# Remove application icon
+ICON_FILE="/usr/share/pixmaps/tourbox-icon.png"
+if [ -f "$ICON_FILE" ]; then
+    echo "Removing application icon..."
+    sudo rm "$ICON_FILE"
+    echo -e "${GREEN}✓${NC} Application icon removed"
+fi
+
 # Get installation directory
 INSTALL_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
