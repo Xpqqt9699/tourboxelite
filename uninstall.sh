@@ -72,10 +72,10 @@ if [ -f "$PID_FILE" ]; then
 fi
 
 # Remove GUI launcher script
-LAUNCHER_FILE="$HOME/.local/bin/tourbox-gui"
+LAUNCHER_FILE="/usr/local/bin/tourbox-gui"
 if [ -f "$LAUNCHER_FILE" ]; then
     echo "Removing GUI launcher..."
-    rm "$LAUNCHER_FILE"
+    sudo rm "$LAUNCHER_FILE"
     echo -e "${GREEN}✓${NC} Launcher script removed"
 fi
 
@@ -88,7 +88,7 @@ read -p "Remove installation directory ($INSTALL_DIR)? (y/N): " -n 1 -r
 echo ""
 
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo "Scheduling directory removal..."
+    echo "Removing installation directory..."
 
     # Create a temporary cleanup script that will delete the installation directory
     # We can't delete the directory while this script is running from it,
@@ -108,8 +108,7 @@ EOF
     # Execute cleanup script in background
     nohup "$CLEANUP_SCRIPT" >/dev/null 2>&1 &
 
-    echo -e "${GREEN}✓${NC} Installation directory will be removed"
-    REMOVING_DIR=true
+    echo -e "${GREEN}✓${NC} Installation directory removed"
 else
     echo -e "${YELLOW}!${NC} Installation directory kept: $INSTALL_DIR"
 fi
@@ -119,8 +118,3 @@ echo -e "${BLUE}========================================${NC}"
 echo -e "${GREEN}✓ Uninstallation Complete!${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
-
-if [ "$REMOVING_DIR" = "true" ]; then
-    echo "The installation directory is being removed in the background."
-    echo ""
-fi

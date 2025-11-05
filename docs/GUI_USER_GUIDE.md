@@ -532,7 +532,7 @@ Speed up your workflow with keyboard shortcuts:
 **Solutions:**
 1. Check that launcher script exists:
    ```bash
-   ls -la ~/.local/bin/tourbox-gui
+   ls -la /usr/local/bin/tourbox-gui
    ```
 2. If missing, re-run installer or create manually:
    ```bash

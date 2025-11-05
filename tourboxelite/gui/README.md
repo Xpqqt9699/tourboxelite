@@ -18,7 +18,7 @@ pip install -r tourboxelite/gui/requirements.txt
 tourbox-gui
 ```
 
-The installer creates a launcher script in `~/.local/bin/tourbox-gui` that you can run from anywhere.
+The installer creates a launcher script in `/usr/local/bin/tourbox-gui` that you can run from anywhere.
 
 ### What the GUI Does
 
