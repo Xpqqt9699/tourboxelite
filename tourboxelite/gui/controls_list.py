@@ -1,0 +1,302 @@
+#!/usr/bin/env python3
+"""Controls list widget
+
+Displays all TourBox controls and their current action mappings.
+"""
+
+import logging
+from typing import Optional, Dict
+from PySide6.QtWidgets import (
+    QWidget, QVBoxLayout, QTableWidget, QTableWidgetItem,
+    QHeaderView, QLabel
+)
+from PySide6.QtCore import Signal, Qt
+from PySide6.QtGui import QBrush, QColor
+from evdev import ecodes as e
+
+# Import from existing driver code
+from tourboxelite.config_loader import Profile, BUTTON_CODES
+
+logger = logging.getLogger(__name__)
+
+
+# All control names in display order
+CONTROL_NAMES = [
+    'side', 'top', 'tall', 'short',
+    'c1', 'c2', 'tour',
+    'dpad_up', 'dpad_down', 'dpad_left', 'dpad_right',
+    'scroll_up', 'scroll_down', 'scroll_click',
+    'knob_cw', 'knob_ccw', 'knob_click',
+    'dial_cw', 'dial_ccw', 'dial_click',
+]
+
+# Friendly names for display
+CONTROL_DISPLAY_NAMES = {
+    'side': 'Side Button',
+    'top': 'Top Button',
+    'tall': 'Tall Button',
+    'short': 'Short Button',
+    'c1': 'C1 Button',
+    'c2': 'C2 Button',
+    'tour': 'Tour Button',
+    'dpad_up': 'D-Pad Up',
+    'dpad_down': 'D-Pad Down',
+    'dpad_left': 'D-Pad Left',
+    'dpad_right': 'D-Pad Right',
+    'scroll_up': 'Scroll Up',
+    'scroll_down': 'Scroll Down',
+    'scroll_click': 'Scroll Click',
+    'knob_cw': 'Knob Clockwise',
+    'knob_ccw': 'Knob Counter-CW',
+    'knob_click': 'Knob Click',
+    'dial_cw': 'Dial Clockwise',
+    'dial_ccw': 'Dial Counter-CW',
+    'dial_click': 'Dial Click',
+}
+
+
+class ControlsList(QWidget):
+    """Widget displaying all controls and their current actions"""
+
+    # Signal emitted when user clicks a control to edit it
+    control_selected = Signal(str)  # control name
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.current_profile: Optional[Profile] = None
+        self._init_ui()
+
+    def _init_ui(self):
+        """Initialize the UI"""
+        layout = QVBoxLayout(self)
+
+        # Header
+        header = QLabel("Controls Configuration")
+        header.setStyleSheet("font-weight: bold; font-size: 14px;")
+        layout.addWidget(header)
+
+        # Table
+        self.table = QTableWidget()
+        self.table.setColumnCount(2)
+        self.table.setHorizontalHeaderLabels(["Control", "Current Action"])
+        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+        self.table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.table.setSelectionMode(QTableWidget.SingleSelection)
+        self.table.verticalHeader().setVisible(False)  # Hide row numbers
+        self.table.itemSelectionChanged.connect(self._on_selection_changed)
+
+        layout.addWidget(self.table)
+
+        # Initial empty state
+        self._show_empty_state()
+
+    def load_profile(self, profile: Profile):
+        """Load and display controls from a profile
+
+        Args:
+            profile: Profile object containing button mappings
+        """
+        self.current_profile = profile
+
+        # Clear table completely first
+        self.table.clearContents()
+        self.table.clearSpans()  # Clear any cell spans from empty state
+        self.table.setRowCount(0)
+
+        # Now set the row count
+        self.table.setRowCount(len(CONTROL_NAMES))
+
+        for row, control_name in enumerate(CONTROL_NAMES):
+            # Control name column
+            name_item = QTableWidgetItem(CONTROL_DISPLAY_NAMES.get(control_name, control_name))
+            name_item.setData(Qt.UserRole, control_name)  # Store internal name
+            name_item.setFlags(name_item.flags() & ~Qt.ItemIsEditable)
+            name_item.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+            name_item.setForeground(QBrush(QColor(0, 0, 0)))  # Black text
+            self.table.setItem(row, 0, name_item)
+
+            # Current action column
+            action_text = self._get_action_text(profile, control_name)
+
+            # Debug logging
+            if not action_text or action_text.isspace():
+                logger.warning(f"Empty action text for {control_name}, using '(none)'")
+                action_text = "(none)"
+
+            logger.debug(f"Control {control_name}: '{action_text}'")
+
+            action_item = QTableWidgetItem(action_text)
+            action_item.setFlags(action_item.flags() & ~Qt.ItemIsEditable)
+            action_item.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+            # Explicitly set foreground color to ensure visibility
+            action_item.setForeground(QBrush(QColor(0, 0, 0)))  # Black text
+            self.table.setItem(row, 1, action_item)
+
+            # Verify it was set
+            verify_item = self.table.item(row, 1)
+            logger.debug(f"  Verified table item at row {row}: {verify_item.text() if verify_item else 'None'}")
+
+            # Check row height
+            row_height = self.table.rowHeight(row)
+            logger.debug(f"  Row {row} height: {row_height}")
+
+        # Force table to update/repaint
+        self.table.viewport().update()
+        # Don't call resizeColumnsToContents() - it overrides the stretch mode set in _init_ui
+        # Column 0 is already set to ResizeToContents, column 1 to Stretch
+
+        # Scroll to top of the list
+        self.table.scrollToTop()
+
+        logger.info(f"Loaded {len(CONTROL_NAMES)} controls for profile: {profile.name}")
+
+    def _get_action_text(self, profile: Profile, control_name: str) -> str:
+        """Get human-readable action text for a control
+
+        Args:
+            profile: Profile containing mappings
+            control_name: Name of the control
+
+        Returns:
+            Human-readable action description
+        """
+        try:
+            if control_name not in BUTTON_CODES:
+                logger.warning(f"Control {control_name} not in BUTTON_CODES")
+                return "(unknown)"
+
+            codes = BUTTON_CODES[control_name]
+            if len(codes) == 0:
+                logger.warning(f"Control {control_name} has no codes")
+                return "(none)"
+
+            # Get the press code (first in tuple)
+            press_code = bytes([codes[0]])
+            logger.debug(f"Control {control_name}: press_code={press_code.hex()}")
+
+            # Look up in profile mapping
+            if press_code not in profile.mapping:
+                logger.debug(f"Control {control_name}: press_code {press_code.hex()} not in mapping")
+                return "(unmapped)"
+
+            events = profile.mapping[press_code]
+            logger.debug(f"Control {control_name}: events={events}")
+
+            if not events:
+                return "(none)"
+
+            # Convert events to readable text
+            parts = []
+            rel_event = None  # Track if we have a REL event
+
+            for event_type, event_code, value in events:
+                logger.debug(f"  Event: type={event_type}, code={event_code}, value={value}")
+                if event_type == e.EV_KEY and value == 1:  # Key press
+                    key_name = self._get_key_name(event_code)
+                    logger.debug(f"    Key name: {key_name}")
+                    parts.append(key_name)
+                elif event_type == e.EV_REL:  # Relative movement
+                    rel_event = (event_code, value)
+
+            # Handle relative events with human-readable names
+            if rel_event:
+                event_code, value = rel_event
+                if event_code == e.REL_WHEEL:
+                    result = f"Wheel {'Up' if value > 0 else 'Down'}"
+                elif event_code == e.REL_HWHEEL:
+                    result = f"Wheel {'Right' if value > 0 else 'Left'}"
+                else:
+                    # Fallback for other REL events
+                    rel_name = self._get_rel_name(event_code)
+                    result = f"{rel_name}:{value}"
+            else:
+                result = "+".join(parts) if parts else "(none)"
+            logger.debug(f"Control {control_name}: final result='{result}'")
+            return result
+
+        except Exception as ex:
+            logger.error(f"Error getting action text for {control_name}: {ex}", exc_info=True)
+            return "(error)"
+
+    def _get_key_name(self, key_code: int) -> str:
+        """Get human-readable key name from evdev code"""
+        # Map common symbol keys to their actual symbols
+        SYMBOL_MAP = {
+            e.KEY_LEFTBRACE: '[',
+            e.KEY_RIGHTBRACE: ']',
+            e.KEY_SEMICOLON: ';',
+            e.KEY_APOSTROPHE: "'",
+            e.KEY_GRAVE: '`',
+            e.KEY_BACKSLASH: '\\',
+            e.KEY_COMMA: ',',
+            e.KEY_DOT: '.',
+            e.KEY_SLASH: '/',
+            e.KEY_MINUS: '-',
+            e.KEY_EQUAL: '=',
+        }
+
+        # Check if it's a symbol key
+        if key_code in SYMBOL_MAP:
+            return SYMBOL_MAP[key_code]
+
+        # Find key name in ecodes
+        for name, code in e.__dict__.items():
+            if name.startswith('KEY_') and code == key_code:
+                # Clean up name
+                original_name = name
+                name = name.replace('KEY_', '')
+
+                # Don't strip LEFT/RIGHT from arrow keys and navigation keys
+                if original_name not in ('KEY_LEFT', 'KEY_RIGHT', 'KEY_UP', 'KEY_DOWN'):
+                    name = name.replace('LEFT', '')
+                    name = name.replace('RIGHT', '')
+
+                # Special case for Meta key
+                if name == 'META':
+                    name = 'SUPER'
+
+                # Replace underscores with spaces for readability
+                name = name.replace('_', ' ')
+                return name.title()
+        return f"Key{key_code}"
+
+    def _get_rel_name(self, rel_code: int) -> str:
+        """Get human-readable relative event name"""
+        for name, code in e.__dict__.items():
+            if name.startswith('REL_') and code == rel_code:
+                return name.replace('REL_', '')
+        return f"Rel{rel_code}"
+
+    def _show_empty_state(self):
+        """Show empty state when no profile loaded"""
+        self.table.setRowCount(1)
+        item = QTableWidgetItem("No profile selected")
+        item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+        self.table.setItem(0, 0, item)
+        self.table.setSpan(0, 0, 1, 2)
+
+    def _on_selection_changed(self):
+        """Handle row selection change"""
+        selected = self.table.selectedItems()
+        if selected:
+            row = self.table.currentRow()
+            name_item = self.table.item(row, 0)
+            if name_item:
+                control_name = name_item.data(Qt.UserRole)
+                if control_name:
+                    logger.debug(f"Control selected: {control_name}")
+                    self.control_selected.emit(control_name)
+
+    def select_control(self, control_name: str):
+        """Programmatically select a control in the list
+
+        Args:
+            control_name: Name of the control to select
+        """
+        for row in range(self.table.rowCount()):
+            item = self.table.item(row, 0)
+            if item and item.data(Qt.UserRole) == control_name:
+                self.table.selectRow(row)
+                self.table.scrollToItem(item)
+                break

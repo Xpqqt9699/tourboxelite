@@ -1,0 +1,5 @@
+# GUI-specific dependencies
+# Install with: pip install -r tourboxelite/gui/requirements.txt
+
+PySide6>=6.5.0
+qasync>=0.24.0
