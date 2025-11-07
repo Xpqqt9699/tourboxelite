@@ -251,10 +251,15 @@ tourboxelite/
 │       ├── controller_view.py                      # Visual TourBox controller view (SVG-based)
 │       ├── profile_settings_dialog.py              # Profile settings dialog (window matching)
 │       ├── driver_manager.py                       # Driver service management widget
+│       ├── ble_listener.py                         # BLE event listener for live testing
 │       ├── config_writer.py                        # Config file write operations (atomic saves)
+│       ├── README.md                                # GUI package documentation
 │       ├── requirements.txt                        # GUI-specific dependencies (PySide6, qasync)
 │       └── assets/                                 # GUI assets
-│           └── *.svg                               # SVG images for controller view
+│           ├── tourbox_elite.svg                   # Main controller SVG image
+│           ├── tourbox_elite_org.svg               # Original controller SVG
+│           ├── tourbox-icon.svg                    # Application icon (SVG)
+│           └── tourbox-icon.png                    # Application icon (PNG)
 ├── docs/                                           # Documentation
 │   ├── CONFIG_GUIDE.md                             # Configuration documentation
 │   ├── DEVELOPMENT.md                              # This file
@@ -273,10 +278,12 @@ tourboxelite/
 ├── install.sh                                      # Installation script (includes GUI deps & launcher)
 ├── uninstall.sh                                    # Uninstallation script (removes GUI launcher)
 ├── install_config.sh                               # Config installer (for manual setup)
+├── tourbox-gui.desktop                             # Desktop integration file for GUI launcher
 ├── setup.py                                        # Python package setup
 ├── setup.cfg                                       # Python package metadata (includes GUI entry point)
 ├── requirements.txt                                # Python dependencies
 ├── LICENSE.txt                                     # License file
+├── .gitignore                                      # Git ignore patterns
 └── README.md                                       # User documentation
 ```
 
@@ -355,6 +362,12 @@ tourboxelite/
 - Display service status (running/stopped/not installed)
 - Real-time status updates
 - Service log viewing
+
+**`gui/ble_listener.py`** - BLE event listener (~120 LOC)
+- Listens for button events from TourBox during live testing
+- Async BLE connection and event monitoring
+- Used by Test functionality in main window
+- Runs concurrently with GUI to provide real-time feedback
 
 **`gui/config_writer.py`** - Config file operations (~250 LOC)
 - Atomic config file saves with backup rotation
