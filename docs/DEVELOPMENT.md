@@ -256,7 +256,7 @@ tourboxelite/
 │       ├── README.md                                # GUI package documentation
 │       ├── requirements.txt                        # GUI-specific dependencies (PySide6, qasync)
 │       └── assets/                                 # GUI assets
-│           ├── tourbox_elite.svg                   # Main controller SVG image
+│           ├── tourbox_elite.svg                   # Main controller SVG image (Text converted to paths)
 │           ├── tourbox_elite_org.svg               # Original controller SVG
 │           ├── tourbox-icon.svg                    # Application icon (SVG)
 │           └── tourbox-icon.png                    # Application icon (PNG)
