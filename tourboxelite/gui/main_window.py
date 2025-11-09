@@ -742,18 +742,47 @@ class TourBoxConfigWindow(QMainWindow):
 
     def _stop_testing(self):
         """Stop testing mode - stop driver, re-enable UI"""
-        # Show progress dialog
-        logger.info("Stopping driver...")
-        progress = QProgressDialog("Stopping TourBox driver...", None, 0, 0, self)
-        progress.setWindowTitle("Stopping Test Mode")
-        progress.setWindowModality(Qt.WindowModal)
-        progress.setMinimumDuration(0)
-        progress.show()
+        # Create progress dialog
+        self.stop_progress = QProgressDialog(
+            "Preparing to stop driver...",
+            None,  # No cancel button
+            0, 0,  # Indeterminate progress (min=0, max=0)
+            self
+        )
+        self.stop_progress.setWindowTitle("Stopping Test Mode")
+        self.stop_progress.setWindowModality(Qt.WindowModal)
+        self.stop_progress.setMinimumDuration(0)  # Show immediately
+        self.stop_progress.setAutoClose(False)  # Don't auto-close
+        self.stop_progress.setAutoReset(False)  # Don't auto-reset
+        self.stop_progress.setValue(0)
+        self.stop_progress.show()
+
+        # Force the dialog to paint by processing events
         QApplication.processEvents()
 
+        # Defer the actual work to allow dialog to fully render
+        QTimer.singleShot(50, self._stop_driver_progress)
+
+    def _stop_driver_progress(self):
+        """Step 1 of stop testing: Stop the driver"""
+        self.stop_progress.setLabelText("Stopping TourBox driver service...")
+        QApplication.processEvents()
+
+        logger.info("Stopping driver...")
         success, message = DriverManager.stop_driver()
 
-        progress.close()
+        # Store result for next step
+        self.stop_driver_result = (success, message)
+
+        # Continue to next step
+        QTimer.singleShot(100, self._finish_stop_testing)
+
+    def _finish_stop_testing(self):
+        """Step 2 of stop testing: Finish and close dialog"""
+        success, message = self.stop_driver_result
+
+        # Close progress dialog
+        self.stop_progress.close()
 
         if success:
             logger.info("Driver stopped successfully - exiting test mode")
